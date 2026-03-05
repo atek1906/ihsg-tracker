@@ -19,7 +19,9 @@ ihsg_stocks = {
     "Mandiri": "BMRI.JK",
     "Astra International": "ASII.JK",
     "GOTO": "GOTO.JK",
-    "BNI": "BBNI.JK"
+    "BNI": "BBNI.JK",
+    "Aneka Tambang (ANTM)": "ANTM.JK",
+    "Energi Mega Persada (ENRG)": "ENRG.JK"
 }
 
 selected_stock_name = st.selectbox("Pilih Saham atau Indeks:", list(ihsg_stocks.keys()))
