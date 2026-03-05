@@ -41,17 +41,24 @@ with st.spinner(f"Memuat data untuk {selected_stock_name} ({ticker_symbol})...")
 if df.empty:
     st.error("Gagal memuat data. Silakan coba lagi nanti.")
 else:
+    # Normalize yfinance 1.2.0 multi-index columns for single ticker
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.droplevel(1)
+
+    # Ensure columns are Series
+    close_series = df['Close'].squeeze()
+
     # --- Technical Indicators ---
 
     # 1. Simple Moving Averages
-    df['SMA_20'] = ta.trend.sma_indicator(df['Close'], window=20)
-    df['SMA_50'] = ta.trend.sma_indicator(df['Close'], window=50)
+    df['SMA_20'] = ta.trend.sma_indicator(close_series, window=20)
+    df['SMA_50'] = ta.trend.sma_indicator(close_series, window=50)
 
     # 2. Relative Strength Index (RSI)
-    df['RSI'] = ta.momentum.rsi(df['Close'], window=14)
+    df['RSI'] = ta.momentum.rsi(close_series, window=14)
 
     # 3. MACD
-    macd = ta.trend.MACD(df['Close'])
+    macd = ta.trend.MACD(close_series)
     df['MACD'] = macd.macd()
     df['MACD_Signal'] = macd.macd_signal()
 
@@ -88,7 +95,10 @@ else:
     st.subheader(f"Analisis Terkini: {selected_stock_name} ({ticker_symbol})")
 
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Harga Terakhir", f"Rp {int(last_row['Close']):,}")
+
+    last_close = float(last_row['Close'].squeeze()) if isinstance(last_row['Close'], pd.Series) else float(last_row['Close'])
+
+    col1.metric("Harga Terakhir", f"Rp {int(last_close):,}")
     col2.metric("Trend SMA (20 vs 50)", sma_trend)
     col3.metric("RSI (14 hari)", f"{last_row['RSI']:.2f}", delta_color="off", help=rsi_status)
     col4.metric("MACD Trend", macd_trend)
@@ -101,10 +111,10 @@ else:
 
     # Candlestick chart
     fig = go.Figure(data=[go.Candlestick(x=df.index,
-                    open=df['Open'],
-                    high=df['High'],
-                    low=df['Low'],
-                    close=df['Close'],
+                    open=df['Open'].squeeze(),
+                    high=df['High'].squeeze(),
+                    low=df['Low'].squeeze(),
+                    close=df['Close'].squeeze(),
                     name='Harga')])
 
     # Add SMAs
